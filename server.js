@@ -52,7 +52,7 @@ app.get('/',(req,res) => {
 
 
 app.post('/signin',(req,res) => { // return success for login
-    if(req.body.email.length && req.body.password.length > 0){
+    if(req.body.email.length){
 
 
     db.select('*').from('users').where({
