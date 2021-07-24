@@ -85,6 +85,8 @@ app.post('/register',(req,res) => {
     user.joined = new Date();
     db('users').returning('*').insert(user)
     .then((response) => {
+        console.log(response)
+
         res.json(response[0])
     })
     .catch(err =>{
