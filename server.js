@@ -6,6 +6,22 @@ var app = express()
 app.use(bodyParser.json())
 
 app.use(cors())
+const knex = require('knex')
+
+
+const db = knex({
+    client: 'pg',
+    connection: {
+      host : '127.0.0.1',
+      user : 'aliadam',
+      password : '',
+      database : 'faceDetect'
+    }
+  });
+
+  db.select('*').from('users');
+
+
 
 const database = {
     users:[
@@ -29,27 +45,38 @@ const database = {
 }
 
 app.get('/',(req,res) => {
-    res.send(database.users)
+
+    db.select('*').from('users').then((users) => {
+        res.send(users)
+
+    })
 })
 
 
 
-app.post('/signin',(req,res) => {
+app.post('/signin',(req,res) => { // return success for login
     if(req.body.email.length && req.body.password.length > 0){
-    let requester = database.users.filter((user) =>{
-        return (req.body.email == user.email)
+
+
+    db.select('*').from('users').where({
+        email:req.body.email
+    }).then((users) => {
+        if(users.length){
+            console.log('someone loged in')
+            res.json("sucess")
+
+        }
+        else {
+            res.status(404).json("Wrong Email or Password")
+        }
+
+
     })
    
-    if (req.body.password == requester[0].password ){
-
-        res.json("sucess")
-    } 
-    else {
-        res.status(400).json('error')
-    }
+  
 }
 else {
-    res.status(400).json('error')
+    res.status(400).json('Email or password field missing')
 
 }
 
@@ -58,51 +85,41 @@ app.post('/register',(req,res) => {
     let user = {};
     user.email = req.body.email;
     user.name = req.body.name;
-    user.password = req.body.password;
-    user.entries = 0;
     user.joined = new Date();
-    database.users.push(user);
-    console.log(    database.users)
-    res.json(database.users[database.users.length-1]);
+    db('users').returning('*').insert(user)
+    .then((response) => {
+        res.json(response[0])
+    })
+    .catch(err =>{
+        res.status(400).json(err)
+    })
 
 })
 
-app.get('/profile/:email',(req,res) => {
+app.get('/profile/:email',(req,res) => { // returns user
     const {email} = req.params
-    let found = false;
-    database.users.forEach((user) => {
-        if (user.email == email) {
-            found = true;
-         return res.json(user);
-        }
-      
-    })
-
-    if(!found) {
+  db.select('*').from('users').where({
+      email : email
+  }).then((user) =>{
+      if(user.length) {
+          res.json(user[0])
+      }
+      else  {
         res.status(404).json("no such user")
 
     }
 
+  })
+
+  
 })
 
 
-app.put('/img',(req,res) => {
+app.put('/img',(req,res) => { // return count
     const {email} = req.body
-    let found = false;
-    database.users.forEach((user) => {
-        if (user.email == email) {
-            found = true;
-            user.entries++
-         return res.json(user.entries);
-        }
-      
+    db('users').where('email', '=', email).increment('entries', 1).returning('entries').then((entires) =>{
+        res.send(entires);
     })
-
-    if(!found) {
-        res.status(404).json("no such user")
-
-    }
-
 })
 
 app.listen(3000,()=>{
