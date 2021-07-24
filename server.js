@@ -46,10 +46,7 @@ const database = {
 
 app.get('/',(req,res) => {
 
-    db.select('*').from('users').then((users) => {
-        res.send(users)
-
-    })
+   res.json("working")
 })
 
 
@@ -122,7 +119,7 @@ app.put('/img',(req,res) => { // return count
     })
 })
 
-app.listen(3000,()=>{
+app.listen(process.env.PORT || 3000,()=>{
     console.log('app running')
 })
 
